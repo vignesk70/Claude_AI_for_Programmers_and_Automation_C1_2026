@@ -40,24 +40,29 @@ Then draw the request flow from Postman to the returned JSON.
 ## Questions to discuss
 
 1. Which file decides that `/health` is a GET endpoint?
-   **`app/api/routes/health.py`, line 7** — the decorator `@router.get("/health", response_model=HealthResponse)` registers the path `/health` as an HTTP GET endpoint. The `get` method on the `APIRouter` instance is what binds both the URL and the HTTP verb.
+   **`app/api/routes/health.py`,  the decorator `@router.get("/health", response_model=HealthResponse)` registers the path `/health` as an HTTP GET endpoint. 
 
 2. Which file connects the route to the FastAPI application?
-   **Two files form a chain:**
-   - **`app/api/router.py`, line 6** — `api_router.include_router(health_router)` aggregates the health route into the central API router.
-   - **`app/main.py`, line 10** — `app.include_router(api_router)` mounts the aggregated router onto the `FastAPI` application instance.
-   The request therefore flows: `main.py → router.py → health.py`.
+   **its a chain:**
+   - **`app/api/health.py`,**  defines the output of the route.
+   - **`app/api/router.py`,** — `api_router.include_router(health_router)` adds the health route into the API router.
+   - **`app/main.py`, line 10** — `app.include_router(api_router)` consolidates routers onto the `FastAPI` application instance.
+   The request is flows: `main.py → router.py → health.py`.
 
 3. Where is the shape of the response defined?
-   **`app/schemas/common.py`, lines 5–6** — the `HealthResponse` Pydantic `BaseModel` defines the response shape: a single field `status: Literal["ok"]` with a default value of `"ok"`. The route references it via `response_model=HealthResponse` in `health.py`, which tells FastAPI to validate and serialize the response against that schema.
+   **`app/schemas/common.py`, 
+   
+   the `HealthResponse` Pydantic `BaseModel` defines the response shape: 
+   a single field `status: Literal["ok"]` with a default value of `"ok"`. 
+   The route references it via `response_model=HealthResponse` in `health.py`, which tells FastAPI to validate and serialize the response against that schema.
 
 4. Does this endpoint need Claude? Why or why not?
-   **No.** The endpoint returns a static, hard-coded `{"status": "ok"}` response. It performs no AI inference, no prompt construction, and no LLM call. Its purpose is purely operational — a deterministic health-check used by monitoring tools and load balancers to verify the service is running. Adding Claude here would introduce unnecessary latency, cost, and a potential point of failure for a trivially simple response.
-
+   **No.** 
+   
+   The endpoint returns a static, hard-coded `{"status": "ok"}` response. 
+   
 5. What would have to change if this route needed to become `/api/health`?
-   **Two options:**
-   - **Option A (direct):** Change the decorator in `app/api/routes/health.py` line 7 from `@router.get("/health", ...)` to `@router.get("/api/health", ...)`. This works but hard-codes the prefix inside the route file.
-   - **Option B (cleaner, modular):** In `app/api/router.py`, line 6, add a prefix: `api_router.include_router(health_router, prefix="/api")`. The route file stays unaware of the prefix, which is better for modularity and makes it easy to apply the prefix to all routes in one place.
+   - In `app/api/router.py`, add a prefix: `api_router.include_router(health_router, prefix="/api")`. 
 
 ## Deliverable
 
