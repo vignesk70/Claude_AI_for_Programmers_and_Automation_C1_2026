@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     ollama_base_url: str = Field(default="http://localhost:11434/v1", alias="OLLAMA_BASE_URL")
     ollama_model: str = Field(default="qwen3", alias="OLLAMA_MODEL")
 
+    # MongoDB settings
+    mongodb_url: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URL")
+    mongodb_database: str = Field(default="supportops", alias="MONGODB_DATABASE")
+
 
 @lru_cache()
 def get_settings() -> Settings:
